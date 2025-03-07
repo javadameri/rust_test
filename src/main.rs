@@ -112,8 +112,8 @@ async fn delete_item(
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     dotenv().ok();
-    let database_url =
-        env::var("DATABASE_URL").expect("DATABASE_URL must be set in .env file");
+    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set in .env file");
+    let host = env::var("HOST").unwrap_or("127.0.0.1:8080".to_string());
     let manager = ConnectionManager::<PgConnection>::new(database_url);
     let pool: DbPool = r2d2::Pool::builder()
         .build(manager)
@@ -127,7 +127,7 @@ async fn main() -> std::io::Result<()> {
             .route("/items/{id}", web::put().to(update_item))
             .route("/items/{id}", web::delete().to(delete_item))
     })
-    .bind("127.0.0.1:8080")? // سرور روی 127.0.0.1:8080 اجرا می‌شود
+    .bind(host)? // سرور روی 127.0.0.1:8080 اجرا می‌شود
     .run()
     .await
 }
