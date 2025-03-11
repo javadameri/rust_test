@@ -1,4 +1,3 @@
-#[macro_use]
 extern crate diesel;
 extern crate dotenv;
 
@@ -10,15 +9,7 @@ use std::env;
 
 pub type DbPool = r2d2::Pool<ConnectionManager<PgConnection>>;
 
-mod schema {
-    table! {
-        items (id) {
-            id -> Int4,
-            name -> Varchar,
-            created_at -> Timestamp,
-        }
-    }
-}
+pub mod schema;
 
 mod models;
 use models::{Item, NewItem};

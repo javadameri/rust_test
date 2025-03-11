@@ -4,6 +4,6 @@ diesel::table! {
     items (id) {
         id -> Int4,
         name -> Varchar,
-        created_at -> Nullable<Timestamp>,
+        created_at -> Timestamp,
     }
 }
