@@ -1,7 +1,7 @@
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
-use diesel::Queryable;
-use diesel::Insertable;
+use diesel::{Queryable, Insertable};
+use crate::schema::items;
 
 #[derive(Debug, Serialize, Deserialize, Queryable)]
 pub struct Item {
@@ -11,7 +11,7 @@ pub struct Item {
 }
 
 #[derive(Debug, Serialize, Deserialize, Insertable)]
-#[diesel(table_name = crate::schema::items)]
+#[diesel(table_name = items)]
 pub struct NewItem {
     pub name: String,
 }
