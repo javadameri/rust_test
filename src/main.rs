@@ -6,6 +6,7 @@ use dotenv::dotenv;
 use std::env;
 use crate::config::establish_connection;
 use crate::routes::items::config_routes;
+use crate::routes::user::config_routes as user_routes;
 
 mod config;
 mod models;
@@ -23,6 +24,7 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .app_data(web::Data::new(pool.clone()))
             .configure(config_routes)
+            .configure(user_routes)
     })
     .bind(host)?
     .run()

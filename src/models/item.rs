@@ -7,7 +7,7 @@ use crate::schema::items;
 pub struct Item {
     pub id: i32,
     pub name: String,
-    pub created_at: NaiveDateTime,
+    pub created_at: Option<NaiveDateTime>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Insertable)]
