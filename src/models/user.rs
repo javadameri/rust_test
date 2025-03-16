@@ -11,6 +11,13 @@ pub struct User {
     pub password: String
 }
 
+#[derive(Insertable)]
+#[diesel(table_name = users)]
+pub struct NewUser {
+    pub username: String,
+    pub password: String,
+}
+
 #[derive(Queryable, Insertable, Identifiable)]
 #[diesel(table_name = roles)]
 pub struct Role {
@@ -19,10 +26,24 @@ pub struct Role {
     pub role_type: String
 }
 
+#[derive(Insertable, Serialize, Deserialize)]
+#[diesel(table_name = roles)]
+pub struct NewRole {
+    pub name: String,
+    pub role_type: String
+}
+
 #[derive(Queryable, Insertable, Identifiable)]
 #[diesel(table_name = permissions)]
 pub struct Permission {
     pub id: i32,
+    pub name: String,
+    pub permission_type: String
+}
+
+#[derive(Queryable, Insertable, Serialize, Deserialize)]
+#[diesel(table_name = permissions)]
+pub struct NewPermission {
     pub name: String,
     pub permission_type: String
 }

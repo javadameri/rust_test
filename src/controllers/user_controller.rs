@@ -5,13 +5,14 @@ use jsonwebtoken::{encode, Header, EncodingKey};
 use chrono::{Utc, Duration};
 use serde::{Deserialize, Serialize};
 use crate::config::DbPool;
-use crate::models::user::{Permission, Role, RolePermission, User, UserRole};
+use crate::models::user::{NewPermission, NewRole, NewUser, RolePermission, User, UserRole};
 use crate::schema::{users, roles, permissions, role_permissions, users_roles};
 
 #[derive(Deserialize)]
 pub struct RegisterForm {
-    pub username: String,
-    pub password: String,
+    username: String,
+    password: String,
+    confirm_password: String,
 }
 
 #[derive(Deserialize)]
@@ -26,29 +27,54 @@ struct Claims {
     exp: usize,
 }
 
+#[derive(Serialize)]
+struct TokenResponse {
+    token: String,
+}
+
 // تابع ثبت‌نام
-pub async fn register(form: web::Json<RegisterForm>,conn: web::Data<DbPool>) -> impl Responder {
-    let mut conn = conn.get().expect("Error getting DB connection"); // دریافت اتصال متغیر
+pub async fn register(form: web::Json<RegisterForm>, conn: web::Data<DbPool>) -> impl Responder {
+    let mut conn = conn.get().expect("Error getting DB connection");
 
+    // 1️⃣ بررسی صحت پسورد
+    if form.password != form.confirm_password {
+        return HttpResponse::BadRequest().body("Passwords do not match");
+    }
 
-    let hashed_password = match hash(form.password.clone(), DEFAULT_COST) {
+    // 2️⃣ هش کردن پسورد
+    let hashed_password = match hash(&form.password, DEFAULT_COST) {
         Ok(h) => h,
         Err(_) => return HttpResponse::InternalServerError().body("Error hashing password"),
     };
 
-    let new_user = User {
-        id: 0,  // Auto-increment ID
-        username: form.username.clone(),
-        password: hashed_password,
+    // 3️⃣ آماده‌سازی داده برای ثبت در دیتابیس
+    let new_user = NewUser {
+        username: form.username.clone(), // تبدیل &String به String
+        password: hashed_password.clone(),
     };
 
-    // ذخیره کاربر در پایگاه داده
-    diesel::insert_into(users::table)
+    // 4️⃣ ذخیره در پایگاه داده
+    match diesel::insert_into(users::table)
         .values(&new_user)
-        .execute(&mut conn)
-        .expect("Error saving new user");
+        .get_result::<User>(&mut conn)
+    {
+        Ok(user) => {
+            // 5️⃣ ایجاد توکن JWT
+            let claims = Claims {
+                sub: user.username.clone(),
+                exp: chrono::Utc::now().timestamp() as usize + 60 * 60, // یک ساعت اعتبار
+            };
+            let token = encode(
+                &Header::default(),
+                &claims,
+                &EncodingKey::from_secret("your_secret_key".as_ref()),
+            )
+            .unwrap();
 
-    HttpResponse::Created().body("User created successfully")
+            HttpResponse::Created().json(TokenResponse { token })
+        }
+        Err(_) => HttpResponse::InternalServerError().body("Error saving new user"),
+    }
 }
 
 // تابع لاگین
@@ -75,7 +101,7 @@ pub async fn login(form: web::Json<LoginForm>, conn: web::Data<DbPool>) -> impl 
                     Err(_) => return HttpResponse::InternalServerError().body("Error generating token"),
                 };
 
-                HttpResponse::Ok().json(token) // بازگشت توکن JWT
+                HttpResponse::Created().json(TokenResponse { token })
             } else {
                 HttpResponse::Unauthorized().body("Invalid credentials")
             }
@@ -85,13 +111,12 @@ pub async fn login(form: web::Json<LoginForm>, conn: web::Data<DbPool>) -> impl 
 }
 
 // تابع افزودن نقش
-pub async fn add_role(form: web::Json<String>, conn: web::Data<DbPool>) -> impl Responder {
+pub async fn add_role(form: web::Json<NewRole>, conn: web::Data<DbPool>) -> impl Responder {
     let mut conn = conn.get().expect("Error getting DB connection"); // دریافت اتصال متغیر
 
-    let new_role = Role {
-        id: 0,  // Auto-increment ID
-        name: form.into_inner(),
-        role_type: "custom".to_string(), // نوع پیش‌فرض
+    let new_role = NewRole {
+        name: form.name.clone(),
+        role_type: form.role_type.clone(), // نوع پیش‌فرض
     };
 
     diesel::insert_into(roles::table)
@@ -103,14 +128,13 @@ pub async fn add_role(form: web::Json<String>, conn: web::Data<DbPool>) -> impl 
 }
 
 // تابع افزودن دسترسی
-pub async fn add_permission(form: web::Json<String>, conn: web::Data<DbPool>) -> impl Responder {
+pub async fn add_permission(form: web::Json<NewPermission>, conn: web::Data<DbPool>) -> impl Responder {
     let mut conn = conn.get().expect("Error getting DB connection"); // دریافت اتصال متغیر
 
 
-    let new_permission = Permission {
-        id: 0,  // Auto-increment ID
-        name: form.into_inner(),
-        permission_type: "custom".to_string(), // نوع پیش‌فرض
+    let new_permission = NewPermission {
+        name: form.name.clone(),
+        permission_type: form.permission_type.clone()
     };
 
     diesel::insert_into(permissions::table)
