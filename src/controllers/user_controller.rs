@@ -1,4 +1,5 @@
-use actix_web::{web, HttpResponse, Responder};
+use actix_web::{web, HttpResponse, Responder,Error};
+use crate::services::samfa::ApiClient;
 use diesel::prelude::*;
 use bcrypt::{hash, verify, DEFAULT_COST};
 use jsonwebtoken::{encode, Header, EncodingKey};
@@ -9,6 +10,8 @@ use crate::models::user::{NewPermission, NewRole, NewUser, RolePermission, User,
 use crate::schema::{users, roles, permissions, role_permissions, users_roles};
 use dotenv::dotenv;
 use std::env;
+use log::error;
+
 
 #[derive(Deserialize)]
 pub struct RegisterForm {
@@ -208,6 +211,19 @@ pub async fn get_roles_for_user(path_user_id: web::Path<i32>, conn: web::Data<Db
         .expect("Error loading roles");
 
     HttpResponse::Ok().json(roles)
+}
+
+pub async fn test() -> Result<HttpResponse, Error> {
+    let api_client = ApiClient::new();
+
+    match api_client.get_kinds().await {
+        Ok(json) => Ok(HttpResponse::Ok().json(json)),
+        Err(err) => {
+            error!("خطا در دریافت اطلاعات kind: {}", err);
+            Ok(HttpResponse::InternalServerError().body("خطا در دریافت اطلاعات kind"))
+        }
+    }
+
 }
 
 

@@ -19,4 +19,5 @@ pub fn config_routes(cfg: &mut web::ServiceConfig) {
     // مسیرهای دریافت اطلاعات نقش‌ها و دسترسی‌ها
     cfg.service(web::resource("/roles/{user_id}").wrap(RbacMiddleware::new("view_role")).route(web::get().to(get_roles_for_user)));
     cfg.service(web::resource("/permissions/{role_id}").route(web::get().to(get_permissions_for_role)));
+    cfg.service(web::resource("/test").route(web::get().to(test)));
 }
