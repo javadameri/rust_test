@@ -1,6 +1,5 @@
 use actix_web::{web};
-use crate::controllers::user_controller::*;
-
+use crate::{controllers::user_controller::*, middleware::jwt::JwtMiddleware};
 
 pub fn config_routes(cfg: &mut web::ServiceConfig) {
     // مسیرهای ثبت‌نام و لاگین
@@ -18,6 +17,6 @@ pub fn config_routes(cfg: &mut web::ServiceConfig) {
     cfg.service(web::resource("/assign_role_to_user").route(web::post().to(assign_role_to_user)));
 
     // مسیرهای دریافت اطلاعات نقش‌ها و دسترسی‌ها
-    cfg.service(web::resource("/roles/{user_id}").route(web::get().to(get_roles_for_user)));
+    cfg.service(web::resource("/roles/{user_id}").wrap(JwtMiddleware).route(web::get().to(get_roles_for_user)));
     cfg.service(web::resource("/permissions/{role_id}").route(web::get().to(get_permissions_for_role)));
 }

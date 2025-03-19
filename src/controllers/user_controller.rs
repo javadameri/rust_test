@@ -7,6 +7,8 @@ use serde::{Deserialize, Serialize};
 use crate::config::DbPool;
 use crate::models::user::{NewPermission, NewRole, NewUser, RolePermission, User, UserRole};
 use crate::schema::{users, roles, permissions, role_permissions, users_roles};
+use dotenv::dotenv;
+use std::env;
 
 #[derive(Deserialize)]
 pub struct RegisterForm {
@@ -94,8 +96,10 @@ pub async fn login(form: web::Json<LoginForm>, conn: web::Data<DbPool>) -> impl 
                     sub: user.username,
                     exp: (Utc::now() + Duration::days(1)).timestamp() as usize,
                 };
+                dotenv().ok(); // بارگذاری متغیرهای `.env`
+                let secret_key = env::var("JWT_SECRET").expect("JWT_SECRET must be set");
 
-                let encoding_key = EncodingKey::from_secret("secret".as_ref());
+                let encoding_key = EncodingKey::from_secret(secret_key.as_ref());
                 let token = match encode(&Header::default(), &claims, &encoding_key) {
                     Ok(t) => t,
                     Err(_) => return HttpResponse::InternalServerError().body("Error generating token"),

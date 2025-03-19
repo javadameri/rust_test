@@ -13,6 +13,7 @@ mod models;
 mod controllers;
 mod routes;
 mod schema;
+mod middleware;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {

@@ -11,6 +11,12 @@ pub struct User {
     pub password: String
 }
 
+#[derive(Serialize, Deserialize)]
+pub struct Claims {
+    pub sub: String,  // شناسه کاربر یا نام کاربری
+    pub exp: usize,   // زمان انقضای توکن
+}
+
 #[derive(Insertable)]
 #[diesel(table_name = users)]
 pub struct NewUser {
