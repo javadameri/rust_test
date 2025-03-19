@@ -11,9 +11,9 @@ pub struct User {
     pub password: String
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)] // اضافه کردن Clone برای امکان کپی کردن
 pub struct Claims {
-    pub sub: String,  // شناسه کاربر یا نام کاربری
+    pub sub: i32,  // شناسه کاربر (id) به جای نام کاربری
     pub exp: usize,   // زمان انقضای توکن
 }
 

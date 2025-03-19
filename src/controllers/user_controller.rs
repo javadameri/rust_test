@@ -25,7 +25,7 @@ pub struct LoginForm {
 
 #[derive(Serialize, Deserialize)]
 struct Claims {
-    sub: String,
+    sub: i32,
     exp: usize,
 }
 
@@ -63,7 +63,7 @@ pub async fn register(form: web::Json<RegisterForm>, conn: web::Data<DbPool>) ->
         Ok(user) => {
             // 5️⃣ ایجاد توکن JWT
             let claims = Claims {
-                sub: user.username.clone(),
+                sub: user.id,
                 exp: chrono::Utc::now().timestamp() as usize + 60 * 60, // یک ساعت اعتبار
             };
             let token = encode(
@@ -93,7 +93,7 @@ pub async fn login(form: web::Json<LoginForm>, conn: web::Data<DbPool>) -> impl 
             // تایید رمز عبور وارد شده با رمز عبور ذخیره شده
             if verify(&form.password, &user.password).unwrap_or(false) {
                 let claims = Claims {
-                    sub: user.username,
+                    sub: user.id,
                     exp: (Utc::now() + Duration::days(1)).timestamp() as usize,
                 };
                 dotenv().ok(); // بارگذاری متغیرهای `.env`
